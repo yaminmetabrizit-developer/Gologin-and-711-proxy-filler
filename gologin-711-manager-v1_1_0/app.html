@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GoLogin + 711 Proxy Manager</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="progress-fx.css">
+</head><body>
+<header class="top">
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 40 40" aria-hidden="true">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs>
+      <rect width="40" height="40" rx="11" fill="url(#g)"/>
+      <circle cx="20" cy="20" r="9" fill="none" stroke="#fff" stroke-width="2.4"/>
+      <path d="M11 20h18M20 11c3.5 3 3.5 15 0 18M20 11c-3.5 3-3.5 15 0 18" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    <div><div class="title">GoLogin <span class="plus">+</span> 711Proxy</div><div class="sub">Proxy Manager</div></div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-view="overview" class="on">Overview</button>
+    <button data-view="profiles">Profiles</button>
+    <button data-view="activity">Activity</button>
+  </nav>
+  <div class="right">
+    <span class="conn" id="conn"><i class="dot"></i><b id="connTxt">Not connected</b></span>
+    <button class="icon" id="gotoSettings" title="Settings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="banner" class="banner" hidden></div>
+
+<main>
+<!-- ============ OVERVIEW ============ -->
+<section id="v-overview" class="view on">
+  <div class="cards">
+    <div class="card stat"><span class="k">Total Profiles</span><b id="st-total">0</b></div>
+    <div class="card stat"><span class="k">With Proxies</span><b id="st-with">0</b></div>
+    <div class="card stat"><span class="k">Without Proxies</span><b id="st-without">0</b></div>
+    <div class="card stat ok"><span class="k">Successfully Updated</span><b id="st-success">0</b></div>
+    <div class="card stat bad"><span class="k">Failed Updates</span><b id="st-failed">0</b></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>Connections</h3>
+      <ul class="ind">
+        <li><i class="dot" id="ind-gl"></i><span>GoLogin API</span><em id="ind-gl-t">Not connected</em></li>
+        <li><i class="dot" id="ind-711"></i><span>711Proxy settings</span><em id="ind-711-t">Not configured</em></li>
+        <li><i class="dot" id="ind-scan"></i><span>Proxy scan</span><em id="ind-scan-t">Idle</em></li>
+      </ul>
+      <div class="row">
+        <button class="btn" id="load">Load GoLogin Profiles</button>
+        <button class="btn ghost" id="rescan">Rescan current proxies</button>
+      </div>
+    </div>
+
+    <div class="card bulk">
+      <h3>Bulk Apply</h3>
+      <p class="muted">Eligible profiles (state found in name, with or without a proxy): <b id="elig">0</b> of <b id="eligTotal">0</b></p>
+      <button class="btn primary big" id="applyAll">APPLY TO ALL PROFILES</button>
+      <div class="row">
+        <button class="btn ghost" id="start">Start (Pending only)</button>
+        <button class="btn ghost" id="pause">Pause</button>
+        <button class="btn ghost" id="resume">Resume</button>
+        <button class="btn ghost" id="stop">Stop</button>
+        <button class="btn ghost" id="retry">Retry Failed</button>
+      </div>
+      <div class="progress-box" data-prog></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROFILES ============ -->
+<section id="v-profiles" class="view">
+  <div class="card toolbar">
+    <input id="search" class="in grow" type="search" placeholder="Search by profile name or ID…">
+    <select id="fView" class="in">
+      <option value="all">All profiles</option><option value="with">With proxy</option><option value="without">Without proxy</option>
+      <option value="success">Successfully updated</option><option value="failed">Failed</option>
+    </select>
+    <select id="fCountry" class="in"><option value="all">All countries</option></select>
+  </div>
+  <div class="card toolbar">
+    <button class="btn ghost sm" id="selAll">Select all eligible</button>
+    <button class="btn ghost sm" id="selNone">Deselect all</button>
+    <span class="muted grow"><b id="selCount">0</b> selected · <b id="shownCount">0</b> shown</span>
+    <button class="btn primary" id="applySel" disabled>APPLY TO SELECTED</button>
+  </div>
+  <div class="card tablewrap">
+    <table>
+      <thead><tr>
+        <th class="c"><input type="checkbox" id="selHead" aria-label="Select all eligible visible"></th>
+        <th>Profile Name</th><th>Profile ID</th><th>Country</th><th>Proxy</th><th>Status</th><th>Last Updated</th><th>Action</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div id="empty" class="empty">No profiles loaded yet. Click <b>Load GoLogin Profiles</b> on the Overview tab.</div>
+  </div>
+  <div class="card"><h3>State rules <span class="muted">(editable JSON: "text": "State Name")</span></h3>
+    <textarea id="aliases" class="in" rows="3"></textarea><p class="muted">Saved with the Settings tab’s Save button.</p></div>
+</section>
+
+<!-- ============ ACTIVITY ============ -->
+<section id="v-activity" class="view">
+  <div class="card"><h3>Live progress</h3><div class="progress-box" data-prog></div></div>
+  <div class="card">
+    <div class="toolbar flush"><h3 class="grow">Operation history</h3>
+      <button class="btn ghost sm" id="clearHist">Clear activity</button></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Time</th><th>Profile</th><th>Previous proxy</th><th>New proxy</th><th>Country</th><th>Result</th><th>Details</th></tr></thead>
+      <tbody id="hist"></tbody></table>
+      <div id="histEmpty" class="empty">No activity yet.</div></div>
+  </div>
+  <div class="card"><h3>Log <span class="muted">(secrets are never shown)</span></h3><div id="log"></div></div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section id="v-settings" class="view">
+  <div class="grid2">
+    <div class="card"><h3>1. Connect GoLogin</h3>
+      <label>GoLogin API token <small>(GoLogin → Settings → API)</small><input class="in" id="token" type="password" autocomplete="off"></label>
+    </div>
+    <div class="card"><h3>2. Connect 711 Proxy <small class="muted">(saved once)</small></h3>
+      <label>Host<input class="in" id="host" value="us2.rotgb.trustsource.live"></label>
+      <div class="two"><label>Port<input class="in" id="port" value="10000"></label>
+      <label>Protocol (http or socks5)<input class="in" id="mode" value="http"></label></div>
+      <label>Username template <small>({state} becomes e.g. Florida, NewYork; {session} is a random ID)</small>
+        <input class="in" id="tpl" value="USER200966-zone-custom-region-US-st-{state}"></label>
+      <label>711 password<input class="in" id="pass" type="password" autocomplete="off"></label>
+    </div>
+  </div>
+  <div class="card"><h3>3. Run options</h3>
+    <label class="chk"><input type="checkbox" id="mock"> Test mode (fake profiles, fake proxies, nothing real is changed)</label>
+    <label class="chk"><input type="checkbox" id="dry" checked> Dry run (show what would happen, change nothing)</label>
+    <label class="chk"><input type="checkbox" id="onlyN"> Process only the first profile (use for your first test)</label>
+    <p class="muted note">Profiles that have <b>no proxy yet</b> are assigned a state-matched 711 proxy automatically (Apply All, Apply Selected, single Apply and Start). Profiles that already have a proxy get it replaced. Profiles with no state in their name are skipped and reported.</p>
+    <div class="row"><button class="btn primary" id="save">Save settings</button></div>
+  </div>
+</section>
+</main>
+
+<dialog id="dlg">
+  <h3 id="dlgTitle"></h3>
+  <div id="dlgBody"></div>
+  <label class="chk" id="dlgReapplyWrap" hidden><input type="checkbox" id="dlgReapply"> Also re-apply to profiles already marked Success</label>
+  <p id="dlgWarn" class="warn"></p>
+  <div class="row end"><button class="btn ghost" id="dlgNo">Cancel</button><button class="btn primary" id="dlgYes">Start</button></div>
+</dialog>
+<div id="toast" class="toast" hidden></div>
+
+<script src="states.js"></script><script src="lib.js"></script><script src="progress-fx.js"></script><script src="app.js"></script>
+</body></html>
